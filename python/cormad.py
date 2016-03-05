@@ -1,32 +1,34 @@
 import numpy as np
+from joblib import Parallel, delayed
 
 # Rows of X are patients/samples
 # Cols of X are genes/features
-def cormad(X):
+def cormad(x, y):
     rad2 = np.sqrt(2)
     cost = 1.4826 
+    med_x = np.median(x)
+    med_y = np.median(y)
+    mad_x = cost * np.median(np.abs(x - med_x))
+    mad_y = cost * np.median(np.abs(y - med_y))
+    z_x = (x - med_x) / (cost * mad_x)
+    z_y = (y - med_y) / (cost * mad_y)
+    U = z_x + z_y
+    V = z_x - z_y
+    mad_U2 = ( cost * np.median( np.abs( U - np.median(U) )  ) )**2
+    mad_V2 = ( cost * np.median( np.abs( V - np.median(V) )  ) )**2
+    return (mad_U2 - mad_V2)  /  (mad_U2  + mad_V2)
 
+def RobCor(X, n_jobs=1):
     n_samples, n_features = X.shape
-    med = np.zeros(n_features)
-    mad = np.zeros(n_features)
-    z = np.zeros((n_features, n_samples))
     corr = np.zeros((n_features, n_features))
-
-    # Precompute 
-    print "Precomputing medians...",
-    for i in range(n_features):
-        med[i] = np.median(X[:, i])
-        mad[i] = cost * np.median(np.abs(X[:, i] - med[i]))
-        z[i, :] = (X[:, i] - med[i]) / (cost * mad[i])
-    print "Done."
-
     print "Estimating Correlations...",
-    for i in range(n_features):
-        for j in range(i):
-            U = z[i, :] + z[j, :]
-            V = z[i, :] - z[j, :]
-            mad_U2 = ( cost * np.median( np.abs( U - np.median(U) )  ) )**2
-            mad_V2 = ( cost * np.median( np.abs( V - np.median(V) )  ) )**2
-            corr[i, j] = (mad_U2 - mad_V2)  /  (mad_U2  + mad_V2)
+    if n_jobs == 1:
+        for i in range(n_features):
+            for j in range(i):
+                corr[i, j] = cormad(X[:, i], X[:, j])
+    else:
+        corr = Parallel(n_jobs=n_jobs)(
+                    delayed(cormad)(X[:, i], X[:, j]) for j in range(n_features) for i in range(n_features) if j < i
+                    )
     print "Done."
     return corr

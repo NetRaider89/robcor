@@ -1,12 +1,12 @@
-from cormad import cormad
+from cormad import RobCor
 import numpy as np
 import time
 
-M = np.loadtxt("data/RNASeq_samples_x_genes2.txt")
+M = np.loadtxt("data/data.txt")
 
 timeFirst = time.time()
 
-cc = cormad(M)
+cc = RobCor(M, n_jobs=2)
 
 elapsed = time.time()-timeFirst
 print elapsed
