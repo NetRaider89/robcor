@@ -1,4 +1,4 @@
-## Pietro Coretto, 26/02/2016: data-driven hard-thresholding  
+# Pietro Coretto, 26/02/2016: data-driven hard-thresholding  
 ##
 ## data = [patients  x  genes] 
 ##      = solita matrice RNA ridotta

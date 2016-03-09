@@ -8,7 +8,7 @@ from multiprocessing import JoinableQueue,Process
 RNASeq = np.loadtxt("RNASeq.txt")
 #RNASeq = np.loadtxt('rna_seq_full.txt', skiprows=1, usecols=range(1,152))
 
-def Producer(inQueue,nProcesses):
+def Producer(inQueue):
     print('Producer start!')
     nGenes = RNASeq.shape[0]
     #fill upper triangular matrix of correlations
@@ -58,32 +58,31 @@ def Consumer(outQueue):
             CorMat[i, j]=cor_val
         outQueue.task_done()
 
-if __name__ == '__main__':
-    nProcesses = 24
-    inQueue = JoinableQueue(nProcesses)
-    outQueue = JoinableQueue(nProcesses)
+def ParallelRobCor(X, n_jobs=24)
+    inQueue = JoinableQueue(n_jobs)
+    outQueue = JoinableQueue(n_jobs)
     
-    p_process = Process(target=Producer, args=(inQueue, nProcesses))
-    W_list = []
-    for i in range(nProcesses):
-       W_list.append(Process(target=Worker, args=(inQueue, outQueue)))
-    c_process =Process(target=Consumer, args=(outQueue,))
-    p_process.start()
-    for w in W_list:
+    producer_process = Process(target=Producer, args=(inQueue, n_jobs))
+    worker_list = []
+    for i in range(n_jobs):
+       worker_list.append(Process(target=Worker, args=(inQueue, outQueue)))
+    consumer_process =Process(target=Consumer, args=(outQueue,))
+    producer_process.start()
+    for w in worker_list:
         w.start()
-    c_process.start()
+    consumer_process.start()
 
-    p_process.join()
-    for i in range(nProcesses):
+    producer_process.join()
+    for i in range(n_jobs):
         #Send poison message to processes
         inQueue.put(None)
     #quando arrivo a questo punto vuol dire che tutti i task 
     #nella coda di input sono finiti e il producer e i worker sono morti
-    for w in W_list:
+    for w in worker_list:
         w.join()
 
     outQueue.put(None)
-    c_process.join()
+    consumer_process.join()
     #quando arrivo a questo punto tutti i task sulla coda di 
     #output sono stati smaltiti e anche il consumer muore
 
