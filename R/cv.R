@@ -19,6 +19,20 @@
 ##       dovrebbe prendere circa poco piÃ¹ di 13.5 ore.
 
 
+source('R/cormad.R')
+RobCor = function(data){
+    n = nrow(data)
+    p = ncol(data)
+    R = matrix(0, nrow=p, ncol=p)
+    for(i in seq(p)){
+        for(j in seq(p)){
+            R[i, j] = cormad(data[, i], data[, j])
+        }
+    }
+    return(R)
+}
+
+data = t(as.matrix(read.table('data/RNASeq.txt')))
 R <- RobCor(data)
 
 n        <- nrow(data)    ## patients
@@ -34,27 +48,13 @@ set.seed(19051977)
 
 for (i in 1:nsplits){
    idx <- sample(1:n, size=n1, replace=FALSE)
-   
-   C1 <- RobCor(  data[ idx,  ]  ) 
+   C1 <- RobCor(  data[ idx,  ]  )
+   C1 <- C1[lower.tri(C1)]
    C2 <- RobCor(  data[-idx,  ]  )
+   C2 <- C2[lower.tri(C2)]
    
    for (k in 1:ngrid){
       C1[  abs(C1) <=  tgrid[k]  ] <- 0
-      FLOSSES[i,k] <- norm( C1-C2, "F")^2
+      FLOSSES[i,k] <- norm( C1-C2, "2")^2
    }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

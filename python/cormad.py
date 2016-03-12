@@ -5,7 +5,7 @@ from joblib import Parallel, delayed
 # Cols of X are genes/features
 def cormad(x, y):
     rad2 = np.sqrt(2)
-    cost = 1.4826 
+    cost = 1.4826
     med_x = np.median(x)
     med_y = np.median(y)
     mad_x = cost * np.median(np.abs(x - med_x))
@@ -20,12 +20,14 @@ def cormad(x, y):
 
 def RobCor(X, n_jobs=1):
     n_samples, n_features = X.shape
-    corr = np.zeros((n_features, n_features))
+    #corr = np.zeros((n_features, n_features))
+    corr = []
     print "Estimating Correlations...",
     if n_jobs == 1:
         for i in range(n_features):
             for j in range(i):
-                corr[i, j] = cormad(X[:, i], X[:, j])
+                #corr[i, j] = cormad(X[:, i], X[:, j])
+                corr.append(cormad(X[:, i], X[:, j]))
     else:
         corr = Parallel(n_jobs=n_jobs)(
                     delayed(cormad)(X[:, i], X[:, j]) for j in range(n_features) for i in range(n_features) if j < i
